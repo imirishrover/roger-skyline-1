@@ -1,13 +1,17 @@
 #!bin/bash
+#start this script on your local machine if you have stable ssh connection
+#IP 192.168.56.2 port 2222
 
 ssh nsance@192.168.56.2 -p 2222
-
+#if connection is established continue
 exit
 
+#generate ssh public key
 ssh-keygen -t rsa
-
+#copy key to the server
 ssh-copy-id -i id_rsa.pub nsance@192.168.56.2 -p 2222
 
+#connect via ssh again. use your public key pass if you use it
 ssh nsance@192.168.56.2 -p 2222
 
 sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/g' /etc/ssh/sshd_config
@@ -15,29 +19,28 @@ sudo sed -i 's/#PasswordAuthentification yes/#PasswordAuthentification no/g' /et
 
 sudo service ssh restart
 
-exit
-
-ssh nsance@192.168.56.2 -p 2222
-
+#turn on firewall
 sudo ufw enable
 
+#allow it to use ssh port, http port and udp port
 sudo ufw allow 2222/tcp
 sudo ufw allow 80/tcp
 sudo ufw allow 443
 
+#install utility which can block ddos attacks
 sudo apt-get install fail2ban
+exit
+##############################################
 sudo scp -P 2222 jail.conf nsance@192.168.56.2:/etc/fail2ban/jail.conf
-
 sudo scp -P 2222 http-get-dos.conf nsance@192.168.56.2:/etc/fail2ban/filter.d/
 
 sudo ufw reload
 sudo service fail2ban restart
 
 
-
+#protect server from port scanning
 sudo sed -i 's/TCP_MODE="tcp"/TCP_MODE="atcp"/g' /etc/default/portsentry
 sudo sed -i 's/TCP_MODE="udp"/TCP_MODE="audp"/g' /etc/default/portsentry
-
 
 
 sudo scp -P 2222 portsentry.conf nsance@192.168.56.2:/etc/portsentry/
@@ -45,6 +48,7 @@ sudo scp -P 2222 portsentry.conf nsance@192.168.56.2:/etc/portsentry/
 sudo service portsentry restart
 
 
+#disable unused services
 sudo systemctl disable console-setup.service
 sudo systemctl disable keyboard-setup.service
 sudo systemctl disable apt-daily.timer
@@ -52,11 +56,11 @@ sudo systemctl disable apt-daily-upgrade.timer
 sudo systemctl disable syslog.service
 
 
-echo "sudo apt-get update -y >> /var/log/update_script.log" >> ~/update.sh
-echo "sudo apt-get upgrade -y >> /var/log/update_script.log" >> ~/update.sh
+#create script that automatically follow up the updates of all utulities
+echo "sudo apt-get update -y >> /var/log/update_script.log" >> ~/roger_files/update.sh
+echo "sudo apt-get upgrade -y >> /var/log/update_script.log" >> ~/roger_files/update.sh
 
-
-sudo crontab -e
+#sudo crontab -e
 
 echo "SHELL=/bin/bash
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
@@ -65,16 +69,12 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
 0 4 * * 6 sudo ~/update.sh
 0 0 * * * sudo ~/cronMonitor.sh" >> crontab
 
-echo "sudo apt-get update -y >> /var/log/update_script.log" >> ~/roger_files/update.sh
-echo "sudo apt-get upgrade -y >> /var/log/update_script.log" >> ~/roger_files/update.sh
 
-touch ~/roger_files/cronMonitor.sh
-
-
+#create script that will check actuality of crontab
 sudo scp -P 2222 cronMonitor.sh nsance@192.168.56.2:~/roger_files/
 
 
-
+#configuring mail
 sudo apt-get install postfix mutt
 
 sudo scp -P 2222 main.cf nsance@192.168.56.2:/etc/postfix/
