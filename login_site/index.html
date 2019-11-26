@@ -1,0 +1,27 @@
+<div class="login">
+        <head>
+                <link rel="stylesheet" type="text/css" href="style.css">
+                </head>
+    <h1>Login</h1>
+    <form name="Login form from nsance">
+        <input type="text" name="u" placeholder="Username"/>
+        <input type="password" name="p" placeholder="Password" />
+        <input type="button" onclick="check(this.form)" value="Login"/>
+        <input type="reset" value="Clear form"/>
+    </form>
+    <script language="javascript">
+            function check(form)/*function to check userid & password*/
+            {
+             /*the following code checkes whether the entered userid and password are matching*/
+             if(form.u.value == "login" && form.p.value == "pass")
+              {
+                  alert("ok");
+                window.open('https://profile.intra.42.fr/')/*opens the target page while Id & password matches*/
+              }
+             else
+             {
+               alert("Wrong password")/*displays error message*/
+              }
+            }
+            </script>
+</div>
